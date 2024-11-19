@@ -208,3 +208,6 @@ Line 159: Lexeme: ;               Token: Delimiter
 Line 160: Lexeme: i++             	Token: Invalid
 Line 160: Lexeme: ;               Token: Delimiter
 Line 161: Lexeme: }               Token: Delimiter
+Line 163: Lexeme: Inaantok        Token: Identifier
+Line 163: Lexeme: na              Token: Identifier
+Line 163: Lexeme: akooo           Token: Identifier
