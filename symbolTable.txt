@@ -211,3 +211,5 @@ Line 161: Lexeme: }               Token: Delimiter
 Line 163: Lexeme: Inaantok        Token: Identifier
 Line 163: Lexeme: na              Token: Identifier
 Line 163: Lexeme: akooo           Token: Identifier
+Line 165: Lexeme: Help            Token: Identifier
+Line 165: Lexeme: me              Token: Identifier

@@ -23,7 +23,7 @@ const char *keywords[] = {
     "group", "iffy", "input", "jump", "legit", "locked", "lockin",
     "long", "meanwhile", "nickname", "num", "open", "other", "out",
     "outside", "pl", "rep", "scenario", "short", "standard", "stop",
-    "team", "text", "vibe", "cap", "nocap", NULL
+    "team", "text", "vibe", NULL
 };
 
 const char *reservedWords[] = { "always", "cap", "cont", "nocap", "toptier", NULL };
