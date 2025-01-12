@@ -2,3 +2,5 @@
 i++;
 identifier++;
 --test;
+num x = 10;
+drift y;

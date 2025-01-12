@@ -21,3 +21,11 @@ Line 3: Lexeme: ;               Token: DELIM_SEMCOL
 Line 4: Lexeme: --              Token: UNARY_OPE
 Line 4: Lexeme: test            Token: IDENTIFIER
 Line 4: Lexeme: ;               Token: DELIM_SEMCOL
+Line 5: Lexeme: num             Token: num            
+Line 5: Lexeme: x               Token: IDENTIFIER
+Line 5: Lexeme: =               Token: ASSIGNMENT_OPE
+Line 5: Lexeme: 10              Token: CONSTANT_NUM
+Line 5: Lexeme: ;               Token: DELIM_SEMCOL
+Line 6: Lexeme: drift           Token: drift          
+Line 6: Lexeme: y               Token: IDENTIFIER
+Line 6: Lexeme: ;               Token: DELIM_SEMCOL

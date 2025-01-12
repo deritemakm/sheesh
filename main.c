@@ -490,6 +490,10 @@ ASTNode* parseExpression();
 ASTNode* parseTerm();
 ASTNode* parseFactor();
 ASTNode* parseUnaryVal();
+ASTNode* parseDecStmt();
+ASTNode* parseDataType();
+ASTNode* parseVarList();
+
 Token currentToken;
 int currentIndex = 0;
 
@@ -638,6 +642,160 @@ ASTNode* parseUnaryVal() {
     exit(1);
 }
 
+ASTNode* parseDecStmt() {
+    // <data_type> ( IDENTIFIER | <initialization> | IDENTIFIER <var_list> | <initialization> <var_list>) DELIM_SEMCOL
+    ASTNode *node = NULL;
+
+    if (currentToken.type == KEYWORD) {
+        node = parseDataType();
+        
+        if (currentToken.type == IDENTIFIER) {
+            ASTNode *identifierNode = malloc(sizeof(ASTNode));
+            identifierNode->value = strdup(currentToken.value);
+            identifierNode->left = identifierNode->right = NULL;
+
+            nextToken();
+
+            if (strcmp(currentToken.value, "=") == 0) {
+                nextToken();
+
+                ASTNode *equalNode = malloc(sizeof(ASTNode));
+                equalNode->value = strdup("=");
+                equalNode->left = identifierNode;
+                equalNode->right = parseExpression();
+
+                node->right = equalNode;
+            } else {
+                node->right = identifierNode;
+            }
+
+            while (currentToken.type == DELIM_COMMA) {
+                nextToken();
+                ASTNode *nextIdentifierNode = malloc(sizeof(ASTNode));
+                nextIdentifierNode->value = strdup(currentToken.value);
+                nextIdentifierNode->left = nextIdentifierNode->right = NULL;
+                nextToken();
+
+                if (strcmp(currentToken.value, "=") == 0) {
+                    ASTNode *equalNode = malloc(sizeof(ASTNode));
+                    equalNode->value = strdup(currentToken.value);
+
+                    nextToken();
+                    
+                    equalNode->left = nextIdentifierNode;
+                    equalNode->right = parseExpression(); 
+                    
+                    nextIdentifierNode->right = equalNode;
+                }
+
+                identifierNode->left = nextIdentifierNode;
+                identifierNode = nextIdentifierNode;
+            }
+        }
+
+        if (currentToken.type != DELIM_SEMCOL) {
+            printf("Syntax error (Line %d): Expected semicolon at the end of declaration\n", currentToken.sheeshLine);
+            exit(1);
+        }
+        nextToken();
+
+        return node;
+    }
+
+    return NULL;
+}
+
+
+ASTNode* parseInitialization() {
+    // <initialization> ::= IDENTIFIER "=" <expr>
+    if (currentToken.type == IDENTIFIER) {
+        char *identifier = strdup(currentToken.value);
+        nextToken(); 
+
+        if (currentToken.type != ARITHMETIC_OPE || strcmp(currentToken.value, "=") != 0) {
+            printf("Syntax error (Line %d): Expected '=' in initialization\n", currentToken.sheeshLine);
+            exit(1);
+        }
+        
+        nextToken();
+
+        ASTNode *exprNode = parseExpression();
+
+        ASTNode *initNode = malloc(sizeof(ASTNode));
+        initNode->value = strdup("=");
+        initNode->left = newNode(identifier);
+        initNode->right = exprNode;
+
+        return initNode;
+    }
+
+    printf("Syntax error (Line %d): Expected IDENTIFIER for initialization\n", currentToken.sheeshLine);
+    exit(1);
+}
+
+ASTNode* parseVarList() {
+    // <var_list> ::= (DELIM_COMMA (IDENTIFIER | <initialization>))+
+    ASTNode *varListNode = NULL;
+    ASTNode *lastNode = NULL;
+
+    while (currentToken.type == IDENTIFIER || currentToken.type == KEYWORD) {
+        ASTNode *varNode = NULL;
+        
+        if (currentToken.type == IDENTIFIER) {
+            varNode = newNode(strdup(currentToken.value));
+            nextToken();
+        } else if (currentToken.type == KEYWORD) {
+            varNode = parseInitialization();
+        }
+
+        if (varListNode == NULL) {
+            varListNode = varNode;
+        } else {
+            lastNode->right = varNode;
+        }
+
+        lastNode = varNode;
+
+        if (currentToken.type == DELIM_COMMA) {
+            nextToken(); 
+        } else {
+            break;
+        }
+    }
+
+    return varListNode;
+}
+
+ASTNode* parseDataType() {
+    // num | drift | vibe | text | short | long | legit
+    char* data_type[] = {"num", "drift", "vibe", "text", "short", "long", "legit"};
+    int numDataTypes = sizeof(data_type) / sizeof(data_type[0]);
+
+    if (currentToken.type == KEYWORD) {
+        char *dt;
+
+        for (int i = 0; i < numDataTypes; i++) {
+            if (strcmp(currentToken.value, data_type[i]) == 0) {
+                dt = strdup(currentToken.value);
+
+                nextToken();
+
+                ASTNode *node = newNode(dt);
+                node->left = NULL;
+                node->right = NULL;
+
+                return node;
+            }
+        }
+
+        printf("Syntax error (Line %d): Unexpected keyword '%s'\n", currentToken.sheeshLine, currentToken.value);
+        exit(1);
+    }
+
+    printf("Syntax error (Line %d): Unexpected keyword '%s'\n", currentToken.sheeshLine, currentToken.value);
+    exit(1);
+}
+
 void inOrderTraversal(ASTNode *node) {
     if (node == NULL) {
         return;
@@ -654,21 +812,32 @@ void parse() {
     nextToken();
 
     while (currentToken.value != NULL) {
-        ASTNode *ast = parseExpression();  
+        if (currentToken.type == KEYWORD) {
+            ASTNode *decStmtNode = parseDecStmt();
 
-        printf("Parsed expression: ");
-        inOrderTraversal(ast);
-        printf("\n");
+            if (decStmtNode != NULL) {
+                printf("Parsed Declaration: ");
+                inOrderTraversal(decStmtNode);
+                printf("\n");
 
-        printf("Parse Tree: ");
-        printParseTree(ast);
-        printf("\n");
+                printf("Declaration Parse Tree: ");
+                printParseTree(decStmtNode);
+                printf("\n");
+            }
+        } else {
+            ASTNode *ast = parseExpression();
+
+            printf("Parsed expression: ");
+            inOrderTraversal(ast);
+            printf("\n");
+
+            printf("Parse Tree: ");
+            printParseTree(ast);
+            printf("\n");
+        }
 
         if (currentToken.type == DELIM_SEMCOL) {
             nextToken();
-        } else if (currentToken.value != NULL) {
-            printf("Syntax error (Line %d): expected ';' or end of input, got '%s'\n", currentToken.sheeshLine, currentToken.value);
-            exit(1);
-        }
+        } 
     }
 }
