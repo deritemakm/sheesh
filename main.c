@@ -631,6 +631,22 @@ ASTNode* parseStmts() {
                 current->right = declNode;  // Chain subsequent statements
             }
             current = declNode;  // Move to the latest statement
+
+        } else if (currentToken.type == IDENTIFIER) {
+
+            nextToken();
+            if (currentToken.type == ASSIGNMENT_OPE) {
+                previousToken();
+                ASTNode *assignNode = parseAssignStmt();
+                if (!node) {
+                    node = assignNode;
+                } else {
+                    current->right = assignNode;
+                }
+                current = assignNode;
+                
+            }
+
         } else if (strcmp(currentToken.value, "rep") == 0 || strcmp(currentToken.value, "meanwhile") == 0 || strcmp(currentToken.value, "while") == 0 || strcmp(currentToken.value, "do") == 0) {
             ASTNode *iterativeNode = parseIterativeStmt();  // Parse a declaration statement
             if (!node) {
@@ -756,6 +772,7 @@ ASTNode* parseMultDivExpr() {
     }
     return node;
 }
+
 ASTNode* parsePrimary() {
     printf("Entering parsePrimary. Current token: %s (Type: %d, Line: %d)\n", currentToken.value, currentToken.type, currentToken.sheeshLine);
 
@@ -1233,24 +1250,33 @@ ASTNode* parseVarList() {
 //     exit(1);
 // }
 
+
 ASTNode* parseAssignStmt() {
     if (currentToken.type == IDENTIFIER) {
-        ASTNode *node = newNode("assign_stmt");
-        node->left = newNode(currentToken.value);
+        ASTNode *node = newNode("<assign_stmt>");
+        node->left = newNode(currentToken.value); // LHS: the identifier
         nextToken();
+
+        // Check for assignment operator, including compound assignments
         if (currentToken.type == ASSIGNMENT_OPE) {
-            node->right = newNode(currentToken.value);
-            nextToken();
-            node->right->left = parseExpr();
+            ASTNode *operatorNode = newNode(currentToken.value); // Assignment operator node
+            operatorNode->left = node->left; // Connect the identifier to the operator node
+            nextToken(); // Consume the operator
+
+            // Parse the RHS expression
+            operatorNode->right = parseExpr();
+            node->left = operatorNode; // Assign the operator node as the main content of the assignment statement
         } else {
             printf("Syntax error: Expected assignment operator\n");
             exit(1);
         }
+
+        // Ensure the statement ends with a semicolon
         if (currentToken.type != DELIM_SEMCOL) {
             printf("Syntax error: Missing semicolon in assignment\n");
             exit(1);
         }
-        nextToken();
+        nextToken(); // Consume the semicolon
         return node;
     }
     printf("Syntax error: Invalid assignment statement\n");

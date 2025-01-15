@@ -9,7 +9,6 @@ toptier() {
     cap;
     'c';
     "cat";
-    identifier;
     !test;
     (a+b);
     (a + b);
